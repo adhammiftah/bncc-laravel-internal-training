@@ -14,7 +14,7 @@ class BookController extends Controller
     // function pertama yang dicall oleh sebuah class ketika class tersebut dijadikan instance
     public function __construct()
     {
-        $this->middleware(['auth', 'isAdmin'], ['except' => ['index', 'show', 'buyMenu', 'purchase']]);
+        $this->middleware(['auth', 'isAdmin'], ['except' => ['index', 'show', 'buyMenu', 'purchase', 'showTransactions']]);
     }
 
     /**
@@ -185,5 +185,19 @@ class BookController extends Controller
         });
 
         return redirect(route('home'));
+    }
+
+    public function showTransactions() {
+        // $transactions = DB::table('transactions')
+        //                     ->where('user_id', '=', Auth::id())
+        //                     ->paginate(15);
+        $transactions = Transaction::where('user_id', Auth::id())->get();
+        // dd($transactions);
+        // dd(Transaction::all());
+
+        return view('book.transactions', [
+            'title' => 'Transactions',
+            'transactions' => $transactions
+        ]);
     }
 }
