@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\BookDetail;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
@@ -12,7 +14,7 @@ class BookController extends Controller
     // function pertama yang dicall oleh sebuah class ketika class tersebut dijadikan instance
     public function __construct()
     {
-        $this->middleware(['auth', 'isAdmin'], ['except' => ['index', 'show']]);
+        $this->middleware(['auth', 'isAdmin'], ['except' => ['index', 'show', 'buyMenu', 'purchase']]);
     }
 
     /**
@@ -157,6 +159,30 @@ class BookController extends Controller
     public function destroy($id)
     {
         Book::destroy($id);
+
+        return redirect(route('home'));
+    }
+
+    public function buyMenu($id) {
+        return view('book.buy_menu', [
+            'title' => 'Buy Book',
+            'book' => Book::findOrFail($id),
+        ]);
+    }
+
+    public function purchase(Request $request, $id) {
+        DB::transaction(function () use ($request, $id) {
+            $book = Book::findOrFail($id);
+
+            Transaction::create([
+                'book_id' => $book->id,
+                'user_id' => Auth::id(),
+                'price' => $request->price,
+            ]);
+
+            BookDetail::where('book_id', $id)
+                ->decrement('stock', 1);
+        });
 
         return redirect(route('home'));
     }
